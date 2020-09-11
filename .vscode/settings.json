@@ -3,5 +3,53 @@
     "activityBar.background": "#460E6D",
     "titleBar.activeBackground": "#611398",
     "titleBar.activeForeground": "#FDFBFE"
+  },
+  "[xml]": {
+    "editor.formatOnSave": true
+  },
+  // "xml.fileAssociations": [
+  //   {
+  //     "pattern": "**/*.xml",
+  //     "systemId": "./out/xmlSchema.xsd"
+  //   }
+  // ],
+  "xmlTools.enforcePrettySelfClosingTagOnFormat": true,
+  "xmlTools.xmlFormatterImplementation": "v2",
+  "editor.insertSpaces": false,
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "[markdown]": {
+    "files.trimTrailingWhitespace": false
+  },
+  "brightscript.format.keywordCase": "lower",
+  "brightscript.format.removeTrailingWhiteSpace": true,
+  "brightscript.format.keywordCaseOverride": {
+    "and": "upper",
+    "or": "upper",
+    "mod": "upper",
+    "not": "upper",
+    "goto": "upper",
+    "function": "lower",
+    "sub": "lower",
+    "invalid": "title",
+  },
+  "brightscript.format.typeCase": "title",
+  "brightscript.format.compositeKeywords": "split",
+  "brightscript.format.formatInteriorWhitespace": true,
+  "brightscript.output.focusOnLaunch": true,
+  "files.watcherExclude": {
+    "**/out/**": true
+  },
+  "gremlins.showInProblemPane": true,
+  "search.exclude": {
+    "**/out/**": true
+  },
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/node_modules": true
   }
 }
