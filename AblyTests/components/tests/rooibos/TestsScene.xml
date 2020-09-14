@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="TestsScene" extends="Scene">
+	<script type="text/brightscript" uri="TestsScene.brs" />
+	<script type="text/brightscript" uri="pkg:/source/tests/rooibosDist.brs" />
+
+	<interface>
+		<field id="isReadyToStartTests" type="Boolean" value="false" />
+		<function name="Rooibos_CreateTestNode" />
+	</interface>
+</component>

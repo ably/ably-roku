@@ -12,9 +12,32 @@
       "host": "${env:ROKU_IP}",
       "password": "${env:ROKU_PASSWORD}",
       "envFile": "${workspaceFolder}/.env",
+      "files": [
+        { "src": "./exampleChannel/**/*", "dest": "./" },
+        { "src": "./AblySDK/**/*", "dest": "./" }
+      ],
       "rootDir": "${workspaceFolder}",
       "enableDebuggerAutoRecovery": false,
       "stopDebuggerOnAppExit": false,
+      "retainStagingFolder": true
+    }, {
+      "type": "brightscript",
+      "request": "launch",
+      "name": "BrightScript Debug: Tests",
+      "stopOnEntry": false,
+      "host": "${env:ROKU_IP}",
+      "password": "${env:ROKU_PASSWORD}",
+      "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "prepare-tests",
+      "files": [ "**/*" ],
+      "rootDir": "${workspaceFolder}/out/stagingTests/.roku-deploy-staging/",
+      "sourceDirs": [
+        "${workspaceFolder}/exampleChannel/",
+        "${workspaceFolder}/AblySDK/",
+        "${workspaceFolder}/AblyTests/"
+      ],
+      "enableDebuggerAutoRecovery": false,
+      "stopDebuggerOnAppExit": false
     }
   ]
 }

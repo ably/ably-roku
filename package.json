@@ -1,0 +1,25 @@
+{
+  "name": "ably-roku",
+  "version": "1.0.0",
+  "description": "Realtime client library for Ably.io, the realtime messaging service.",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx ts-node --transpile-only scripts/runTests.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ably/ably-roku.git"
+  },
+  "author": "Christopher Dwyer-Perkins",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/ably/ably-roku/issues"
+  },
+  "homepage": "https://github.com/ably/ably-roku#readme",
+  "dependencies": {
+    "@types/node": "^14.10.1",
+    "roku-deploy": "^3.2.3",
+    "rooibos-cli": "^1.4.0",
+    "ts-node": "^9.0.0"
+  }
+}

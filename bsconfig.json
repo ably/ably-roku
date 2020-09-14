@@ -2,17 +2,8 @@
     "host": "${promptForHost}",
     "password": "${promptForPassword}",
     "files": [
-        {
-            "src": "./exampleChannel/manifest",
-            "dest": "./manifest"
-        },
-        {
-            "src": "./exampleChannel/**/*.*",
-            "dest": "./"
-        },
-        {
-            "src": "./AblySDK/components/**/*.*",
-            "dest": "./components"
-        }
+        { "src": "./exampleChannel/**/*", "dest": "./" },
+        { "src": "./AblySDK/**/*", "dest": "./" }
+        // { "src": "./AblyTests/**/*", "dest": "./" }
     ]
 }
