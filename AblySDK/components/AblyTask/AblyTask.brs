@@ -83,6 +83,7 @@ sub handleBody(body)
       else if m.ACTIONS.MESSAGE = action then
         messages = []
         for each message in protocolMessage.messages
+          if message.encoding = "json" then message.data = ParseJson(message.data)
           messages.push(message)
           logVerbose("message:", message)
         end for
@@ -105,15 +106,15 @@ function getConnectionKey() as String
 end function
 
 function connectEndpoint() as String
-  return m.endpoint + "connect"
+  return m.ENDPOINT + "/connect"
 end function
 
 function sendEndpoint(body as Object) as String
-  return appendQueriesToUri(m.endpoint + m.connectionKey + "/send", { "body": formatJson([body]) })
+  return appendQueriesToUri(m.ENDPOINT + "/" + m.connectionKey + "/send", { "body": formatJson([body]) })
 end function
 
 function recvEndpoint() as String
-  return m.endpoint + m.connectionKey + "/recv"
+  return m.ENDPOINT + "/" + m.connectionKey + "/recv"
 end function
 
 function getDefaultQueryParams() as Object

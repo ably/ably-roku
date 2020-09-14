@@ -13,7 +13,7 @@
 
     <!-- #region constructor parameters -->
     <!-- /* default endpoint for the comet protocol */ -->
-    <field id="endpoint" type="string" value="https://rest.ably.io/comet/" />
+    <field id="endpoint" type="string" value="https://rest.ably.io/comet" />
     <field id="channel" type="string" />
     <!-- /* Supported log levels are 0 - OFF, 1 - ERROR, 2 - WARN, 3 - INFO, 4 - DEBUG, 5 - VERBOSE */ -->
     <field id="logLevel" type="integer" value="3" />
