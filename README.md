@@ -1,7 +1,7 @@
 # Ably Roku SDK  <!-- omit in toc -->
 
 - [Supported platforms](#supported-platforms)
-- [Instillation](#instillation)
+- [Installation](#installation)
 - [Using the Realtime API](#using-the-realtime-api)
     - [Introduction](#introduction)
     - [Connection](#connection)
@@ -15,7 +15,7 @@ This SDK supports the following platforms:
 
 Roku: Firmware versions 9.2 and greater
 
-## Instillation
+## Installation
 TBD
 
 ## Using the Realtime API
@@ -36,7 +36,7 @@ TBD
 5. Create a new Pull Request
 
 #### Development Requirements
-For Development and side loading of the channel you will need the VS Code [BrightScript Language Extension](https://marketplace.visualstudio.com/items?itemName=celsoaf.brightscript).
+For development and side loading of the channel you will need the VS Code [BrightScript Language Extension](https://marketplace.visualstudio.com/items?itemName=celsoaf.brightscript).
 
 You will also need to create an `.env` in the root of the project with the following values to streamline side loading:
 
