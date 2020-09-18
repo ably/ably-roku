@@ -1,5 +1,5 @@
 
-# Ably on Roku
+# Ably on Roku - proof of concept
 
 - [Description](#description)
 - [Supported platforms](#supported-platforms)
