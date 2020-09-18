@@ -1,4 +1,4 @@
-# Ably Roku SDK  <!-- omit in toc -->
+# Ably Roku SDK
 
 - [Supported platforms](#supported-platforms)
 - [Installation](#installation)
