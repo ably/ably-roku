@@ -86,7 +86,7 @@ For development and side loading of the channel we use [VS Code](https://code.vi
 
 You will also need to [Enabling Developer Mode](https://developer.roku.com/en-ca/videos/courses/getting-started/developer-mode.md) on your device. 
 
-**Note**: we will not be using browser based Development Application Installer shown in the video our selfs. The extension will be taking care of all of that for us in VS Code.
+**Note**: We will not be using the browser-based Development Application Installer shown in the video ourselves. The extension will be taking care of all of that for us in VS Code.
 
 You will also need to create an `.env` in the root of the project. This `.env` file can be empty but if you wish to speed up side loading you can add the following values:
 
