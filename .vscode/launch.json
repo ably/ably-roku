@@ -7,7 +7,7 @@
     {
       "type": "brightscript",
       "request": "launch",
-      "name": "BrightScript Debug: Launch",
+      "name": "BrightScript Debug: Live Examples",
       "stopOnEntry": false,
       "host": "${env:ROKU_IP}",
       "password": "${env:ROKU_PASSWORD}",
