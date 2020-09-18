@@ -1,5 +1,5 @@
 
-# Ably on Roku - proof of concept
+# Ably on Roku - proof-of-concept
 
 - [Description](#description)
 - [Supported platforms](#supported-platforms)
@@ -11,6 +11,7 @@
 - [Know Issues and Limitations](#know-issues-and-limitations)
 
 ## Description
+
 This repository is a proof-of-concept demo of subscribing to [Ably channels](https://www.ably.io/) on Roku platform 
 using Brightscript. 
 
@@ -25,6 +26,7 @@ Example screen capture from a Roku device:
 If you would like to view the live examples on your own Roku device you can follow the steps listed in the [Contributing -> Development Requirements](#development-requirements) section.
 
 ## Supported platforms
+
 This proof of concept supports the following platforms:
 
 Roku: Firmware versions 9.2 and greater
@@ -79,7 +81,15 @@ end sub
 
 ## Want to use Ably on Roku? 
 
-If you want to use Ably on Roku platform please get in touch with us at [product@ably.com](mailto:product@ably.com). 
+If you want to use Ably on Roku platform please [get in touch with the Ably team](https://ably.com/contact).
+
+## About Ably
+
+
+Ably is an enterprise-ready pub/sub messaging platform with integrated services to easily build complete realtime functionality delivered directly to end-users. We power the apps people and enterprises depend on everyday. Developers from startups to industrial giants build on Ably to simplify engineering, minimize DevOps overhead, and increase development velocity.
+
+[ably.com](https://ably.com)
+
 
 ## Contributing
 
@@ -99,7 +109,7 @@ You will also need to [Enabling Developer Mode](https://developer.roku.com/en-ca
 
 **Note**: We will not be using the browser-based Development Application Installer shown in the video ourselves. The extension will be taking care of all of that for us in VS Code.
 
-You will also need to create an `.env` in the root of the project. This `.env` file can be empty but if you wish to speed up side loading you can add the following values:
+You will also need to create a `.env` in the root of the project. This `.env` file can be empty but if you wish to speed up side loading you can add the following values:
 
 ```shell
 # This can ether be the IP address of your Roku
@@ -115,11 +125,11 @@ ROKU_PASSWORD=aaaa
 
 Once you have created your `.env` file you are now ready to side load the channel. Simply click on `Run` -> `Start Debugging` or press `F5` by default. The extension should take over from here.
 
-## Know Issues and Limitations
+## Known Issues and Limitations
 
 - The ability to supply your own token/key is not yet supported
-- Keys are not refreshed when they expire leading to error events
-- JWT token is not yet supported
+- Tokens are not refreshed when they expire leading to error events
+- JWT tokens are not yet supported
 - One task is required per channel you wish to subscribe to leading to one connection per channel
   - Plan is to support many channels per task leading to less overall connections
 - History until attached is not yet supported
