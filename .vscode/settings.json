@@ -40,7 +40,6 @@
   "files.watcherExclude": {
     "**/out/**": true
   },
-  "gremlins.showInProblemPane": true,
   "search.exclude": {
     "**/out/**": true
   },
