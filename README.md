@@ -9,6 +9,7 @@
 - [Know Issues and Limitations](#know-issues-and-limitations)
 
 ## Supported platforms
+
 **Note: this is an experimental proof of concept and is not intended for production use at this time.**
 
 This SDK supports the following platforms:
@@ -20,6 +21,7 @@ Roku: Firmware versions 9.2 and greater
 If you would like to try out this experimental work in your own channel you can copy the contents of `AblySDK/components` into your channels `components` folder.
 
 Example running and listening to an `AblyTask`:
+
 ```
 sub init()
   ' Create the AblyTask
@@ -60,7 +62,6 @@ sub onMessages(event as Object)
     print message.data
   end for
 end sub
-
 ```
 
 ## Live Examples
@@ -70,7 +71,9 @@ end sub
 If you would like to view the live examples on your own Roku device you can follow the steps listed in the [Contributing -> Development Requirements](#development-requirements) section.
 
 ## Contributing
+
 #### Process
+
 1. Fork it
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
@@ -78,6 +81,7 @@ If you would like to view the live examples on your own Roku device you can foll
 5. Create a new Pull Request
 
 #### Development Requirements
+
 For development and side loading of the channel we use [VS Code](https://code.visualstudio.com/) with the [BrightScript Language Extension](https://marketplace.visualstudio.com/items?itemName=celsoaf.brightscript).
 
 You will also need to [Enabling Developer Mode](https://developer.roku.com/en-ca/videos/courses/getting-started/developer-mode.md) on your device. 
