@@ -18,6 +18,8 @@ using Brightscript.
 
 **Note: this is an experimental proof of concept and is not intended for production use at this time.**
 
+Example screen capture from a Roku device: 
+
 ![Demo Example Gif](runningDemo.gif)
 
 If you would like to view the live examples on your own Roku device you can follow the steps listed in the [Contributing -> Development Requirements](#development-requirements) section.
