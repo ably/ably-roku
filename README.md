@@ -1,4 +1,4 @@
-# Ably Roku SDK
+# Ably on Roku
 
 - [Supported platforms](#supported-platforms)
 - [Installation](#installation)
@@ -12,7 +12,7 @@
 
 **Note: this is an experimental proof of concept and is not intended for production use at this time.**
 
-This SDK supports the following platforms:
+This proof of concept supports the following platforms:
 
 Roku: Firmware versions 9.2 and greater
 
@@ -112,6 +112,6 @@ Once you have created your `.env` file you are now ready to side load the channe
 - One task is required per channel you wish to subscribe to leading to one connection per channel
   - Plan is to support many channels per task leading to less overall connections
 - History until attached is not yet supported
-- Unlike the SDK's for other platforms messages are returned as array bundles
+- Unlike the client libraries for other platforms messages are returned as array bundles
   - If we get an update with many messages we send one `messages` event as an array containing all the messages rather then one `message` event per message received. This is to reduce the number of times we need to cross thread boundaries
   - This means all events `messages` will be returned as an array
