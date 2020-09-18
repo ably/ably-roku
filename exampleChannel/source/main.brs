@@ -1,11 +1,13 @@
 sub Main(inputArguments as object)
-  screen = createObject("roSGScreen")
-  m.port = createObject("roMessagePort")
-  screen.setMessagePort(m.port)
-  scene = screen.CreateScene("MainScene")
-  screen.show()
-  scene.observeField("appExit", m.port)
-  scene.setFocus(true)
+  if NOT runTests() then
+    screen = createObject("roSGScreen")
+    m.port = createObject("roMessagePort")
+    screen.setMessagePort(m.port)
+    scene = screen.CreateScene("MainScene")
+    screen.show()
+    scene.observeField("appExit", m.port)
+    scene.setFocus(true)
+  end if
 
   while true
     msg = wait(0, m.port)
@@ -23,3 +25,13 @@ sub Main(inputArguments as object)
     end if
   end while
 end sub
+
+function runTests() as Boolean
+  if type(Rooibos_init) = "Function" then
+    Rooibos_init() 'bs:disable-line
+    return false
+  else
+    print "Rooibos not found. Running as sample channel"
+    return false
+  end if
+end function
