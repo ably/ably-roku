@@ -14,7 +14,7 @@
 This repository is a proof-of-concept demo of subscribing to [Ably channels](https://www.ably.io/) on Roku platform 
 using Brightscript. 
 
-[Bitcoin pricing channel](https://www.ably.io/hub/ably-bitflyer/bitcoin) from Ably Hub is used to power this demo.
+[Bitflyer](https://www.ably.io/hub/ably-bitflyer/bitcoin), [Coindesk](https://www.ably.io/hub/ably-coindesk/bitcoin) and [Weather Data](https://www.ably.io/hub/ably-openweathermap/weather) channels from Ably Hub are used to power this demo.
 
 **Note: this is an experimental proof of concept and is not intended for production use at this time.**
 
