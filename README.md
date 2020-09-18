@@ -1,17 +1,25 @@
+
 # Ably on Roku
 
+- [Description](#description)
 - [Supported platforms](#supported-platforms)
 - [Installation](#installation)
 - [Live Examples](#live-examples)
+- [Want to use Ably on Roku?](#want-to-use-ably-on-roku)
 - [Contributing](#contributing)
     - [Process](#process)
     - [Development Requirements](#development-requirements)
 - [Know Issues and Limitations](#know-issues-and-limitations)
 
-## Supported platforms
+## Description
+This repository is a proof-of-concept demo of subscribing to [Ably channels](https://www.ably.io/) on Roku platform 
+using Brightscript. 
+
+[Bitcoin pricing channel](https://www.ably.io/hub/ably-bitflyer/bitcoin) from Ably Hub is used to power this demo.
 
 **Note: this is an experimental proof of concept and is not intended for production use at this time.**
 
+## Supported platforms
 This proof of concept supports the following platforms:
 
 Roku: Firmware versions 9.2 and greater
@@ -69,6 +77,11 @@ end sub
 ![Demo Example Gif](runningDemo.gif)
 
 If you would like to view the live examples on your own Roku device you can follow the steps listed in the [Contributing -> Development Requirements](#development-requirements) section.
+
+
+## Want to use Ably on Roku? 
+
+If you want to use Ably on Roku platform please get in touch with us at [product@ably.com](mailto:product@ably.com). 
 
 ## Contributing
 
