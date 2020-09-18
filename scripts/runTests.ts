@@ -14,8 +14,8 @@ const OUT_DIR = './out/stagingTests/';
 		outDir: OUT_DIR,
 		files: [
 			{ "src": "./exampleChannel/**/*", "dest": "./" },
-			{ "src": "./AblySDK/**/*", "dest": "./" },
-			{ "src": "./AblyTests/**/*", "dest": "./" }
+			{ "src": "./source/**/*", "dest": "./" },
+			{ "src": "./tests/**/*", "dest": "./" }
 		],
 		retainStagingFolder: true
 	});

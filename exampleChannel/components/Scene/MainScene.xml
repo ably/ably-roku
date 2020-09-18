@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <component name="MainScene" extends="Scene">
   <script type="text/brightscript" uri="MainScene.brs" />
+  <script type="text/brightscript" uri="pkg:/source/helpers.brs" />
 
   <interface>
     <field id="appExit" type="bool" alwaysnotify="true" value="false" />
   </interface>
 
   <children>
+    <LayoutGroup id="demosGroup" itemSpacings="[35]" translation="[50, 50]" />
   </children>
 </component>
