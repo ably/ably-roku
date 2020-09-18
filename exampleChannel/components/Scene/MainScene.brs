@@ -1,26 +1,144 @@
 sub init()
-  m.ablyTask = createObject("roSGNode", "AblyTask")
-  m.ablyTask.channel = "[product:ably-bitflyer/bitcoin]bitcoin:jpy"
-  m.ablyTask.observeField("messages", "onMessages")
-  m.ablyTask.observeField("error", "onError")
-  m.ablyTask.observeField("connected", "onConnected")
-  m.ablyTask.control = "RUN"
+  LOG_LEVEL = 3
+  m.CHANNELS = {
+    COINDESK: "[product:ably-coindesk/bitcoin]bitcoin:usd"
+    OPEN_WEATHER_NEWS: "[product:ably-openweathermap/weather]weather:5128581"
+    BITFLYER: "[product:ably-bitflyer/bitcoin]bitcoin:jpy",
+  }
+
+  m.demosGroup = m.top.findNode("demosGroup")
+
+  ' Create the different live example UI blocks
+  createDemo({
+    header: "Coindesk - bitcoin prices live stream"
+    description: "CoinDesk provides current pricing for Bitcoin. This data is available for free on their website. Using API Streamer, it's easy to access this data as a realtime stream. View the documentation for this product on Ably Hub to learn how to implement this yourself."
+    channel: m.CHANNELS.COINDESK
+    logLevel: LOG_LEVEL
+  })
+
+  createDemo({
+    header: "Open Weather News - a live stream of weather related data"
+    description: "OpenWeatherMap provides live weather data for almost any location over the world. This data is available for free on their website. Using API Streamer, it's easy to access this data as a realtime stream. View the documentation for this product on Ably Hub to learn how to implement this yourself."
+    channel: m.CHANNELS.OPEN_WEATHER_NEWS
+    logLevel: LOG_LEVEL
+  })
+
+  createDemo({
+    header: "Bitflyer - bitcoin prices live stream"
+    description: "Bitflyer provides current pricing for Bitcoin. This data is available for free on their website. Using API Streamer, it's easy to access this data as a realtime stream. View the documentation for this product on Ably Hub to learn how to implement this yourself."
+    channel: m.CHANNELS.BITFLYER
+    logLevel: LOG_LEVEL
+  })
 end sub
 
+' Used to create both the demo Ui node and the Ably Task
+' @param {Object} configuration - A configuration object containing the header, description, channel, and logLevel to use for this demo
+sub createDemo(configuration as Object)
+  ' Create the demo Ui nodes
+  demoUiNode = m.demosGroup.createChild("DemoBlock")
+  demoUiNode.update({
+    subType: "DemoBlock"
+    header: configuration.header
+    description: configuration.description
+    channel: configuration.channel
+  })
+  m[configuration.channel + "-channelDemoUiNode"] = demoUiNode
+
+  ' Create the AblyTask
+  ablyTask = createObject("roSGNode", "AblyTask")
+
+  ' Assignee the channel you wish to subscribe to and the logLevel if you wish to change the default
+  ablyTask.channel = configuration.channel
+  ablyTask.logLevel = configuration.logLevel
+
+  ' Observe the event fields
+  ablyTask.observeField("messages", "onMessages")
+  ablyTask.observeField("error", "onError")
+  ablyTask.observeField("connected", "onConnected")
+
+  ' Start the task
+  ablyTask.control = "RUN"
+
+  m[configuration.channel + "-ablyTaskNode"] = ablyTask
+end sub
+
+' Triggered when there is an error event
+' @param {Object} event - The RoSGNodeEvent object with the callback data
+sub onError(event as Object)
+  print "------------------ onError -----------------"
+  print event.getRoSGNode().channel, event.getData()
+end sub
+
+' Triggered when connected and subscribed to the channel
+' @param {Object} event - The RoSGNodeEvent object with the callback data
+sub onConnected(event as Object)
+  print "--------------- onConnected ----------------"
+  print event.getRoSGNode().channel, event.getData()
+end sub
+
+' Triggered when there are new messages to be handled.
+' @param {Object} event - The RoSGNodeEvent object with the callback data
 sub onMessages(event as Object)
   print "---------------- onMessages ----------------"
+  ' Get the channel name from the event objects node
+  channel = event.getRoSGNode().channel
+
+  print "Channel:", channel
+  currentTime = getTime(createObject("roDateTime").ToISOString(), true)
+
+  ' Get the messages array from the event object
   messages = event.getData()
+
+  ' Based on the channel call the appropriate handler function
+  if channel = m.CHANNELS.COINDESK then
+    handleCoindeskMessages(messages, currentTime)
+  else if channel = m.CHANNELS.OPEN_WEATHER_NEWS then
+    handleOpenWeatherNewsMessages(messages, currentTime)
+  else if channel = m.CHANNELS.BITFLYER then
+    handleBitflyerMessages(messages, currentTime)
+  end if
+end sub
+
+' Handles live updates for the Coindesk example
+' @param {Object} messages - The array of message objects
+' @param {String} time - The time string to display on the UI
+sub handleCoindeskMessages(messages as Object, time as String)
+  demoUiNode = m[m.CHANNELS.COINDESK + "-channelDemoUiNode"]
   for each message in messages
-    print message
+    demoUiNode.liveText = toString(message.data)
+    demoUiNode.time = time
   end for
 end sub
 
-sub onError(event as Object)
-  print "------------------ onError -----------------"
-  print event.getData()
+' Handles live updates for the Open Weather News example
+' @param {Object} messages - The array of message objects
+' @param {String} time - The time string to display on the UI
+sub handleOpenWeatherNewsMessages(messages as Object, time as String)
+  demoUiNode = m[m.CHANNELS.OPEN_WEATHER_NEWS + "-channelDemoUiNode"]
+  for each message in messages
+    descriptions = []
+    for each weather in message.data.weather
+      if isNonEmptyString(weather.description) then
+        descriptions.push(weather.description)
+      end if
+    end for
+
+    if isNonEmptyArray(descriptions) then
+      demoUiNode.liveText = toString(message.data.main.temp) + "C with " + descriptions.join(", ")
+    else
+      demoUiNode.liveText = toString(message.data.main.temp) + "C"
+    end if
+    demoUiNode.time = time
+  end for
 end sub
 
-sub onConnected(event as Object)
-  print "--------------- onConnected ----------------"
-  print event.getData()
+' Handles live updates for the Bitfyler example
+' @param {Object} messages - The array of message objects
+' @param {String} time - The time string to display on the UI
+sub handleBitflyerMessages(messages as Object, time as String)
+  demoUiNode = m[m.CHANNELS.BITFLYER + "-channelDemoUiNode"]
+  for each message in messages
+    demoUiNode.liveText = toString(message.data.price)
+    demoUiNode.time = time
+  end for
 end sub

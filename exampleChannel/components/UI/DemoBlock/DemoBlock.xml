@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="DemoBlock" extends="Group">
+	<script type="text/brightscript" uri="DemoBlock.brs" />
+	<script type="text/brightscript" uri="pkg:/source/helpers.brs" />
+
+	<interface>
+		<field id="width" alias="header.width, description.width, demoHeader, demoWell.width, demoWellChanged.width, liveText.width" value="1820" />
+		<field id="channel" type="string" />
+		<field id="header" alias="header.text" />
+		<field id="description" alias="description.text" />
+		<field id="time" alias="time.text" />
+		<field id="liveText" alias="liveText.text" />
+	</interface>
+
+	<children>
+		<LayoutGroup itemSpacings="[10, 25, 10]">
+			<Label id="header" text="header" font="font:MediumBoldSystemFont" />
+			<Label id="description" text="description" font="font:SmallSystemFont" wrap="true" maxLines="10" />
+			<LayoutGroup layoutDirection="horiz" itemSpacings="[10]">
+				<Label id="demoHeader" text="Live Demo:" font="font:SmallBoldSystemFont" />
+				<Label id="time" text="--:--:--" font="font:SmallSystemFont" />
+			</LayoutGroup>
+
+			<Rectangle id="demoWell" height="60" color="#494641">
+				<Rectangle id="demoWellChanged" height="60" color="#2E6D14" opacity="0.001" />
+				<Label id="liveText" horizAlign="center" vertAlign="center" height="60" text="data" font="font:SmallBoldSystemFont" wrap="true" />
+			</Rectangle>
+		</LayoutGroup>
+
+		<Animation id="updateAnimation" duration="0.5" delay="0.05">
+			<FloatFieldInterpolator id="updateAnimationInterpolator" key="[0.0, 1.0]" keyValue="[1.0, 0.0]" fieldToInterp="demoWellChanged.opacity" />
+		</Animation>
+	</children>
+</component>
