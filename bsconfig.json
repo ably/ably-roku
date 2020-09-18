@@ -3,7 +3,7 @@
     "password": "${promptForPassword}",
     "files": [
         { "src": "./exampleChannel/**/*", "dest": "./" },
-        { "src": "./AblySDK/**/*", "dest": "./" }
-        // { "src": "./AblyTests/**/*", "dest": "./" }
+        { "src": "./source/**/*", "dest": "./" }
+        // { "src": "./tests/**/*", "dest": "./" }
     ]
 }

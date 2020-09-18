@@ -18,7 +18,7 @@ Roku: Firmware versions 9.2 and greater
 
 ## Installation
 
-If you would like to try out this experimental work in your own channel you can copy the contents of `AblySDK/components` into your channels `components` folder.
+If you would like to try out this experimental work in your own channel you can copy the contents of `source/components` into your channel's `components` folder.
 
 Example running and listening to an `AblyTask`:
 

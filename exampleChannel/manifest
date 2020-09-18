@@ -1,6 +1,6 @@
 # Channel Details
 title=Ably Example Channel
-subtitle=A simple sample channel showing how to the Ably Roku SDK.
+subtitle=A simple sample channel showing how to use this Ably source on the Roku platform.
 major_version=1
 minor_version=0
 build_version=0
