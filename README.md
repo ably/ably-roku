@@ -4,7 +4,6 @@
 - [Description](#description)
 - [Supported platforms](#supported-platforms)
 - [Installation](#installation)
-- [Live Examples](#live-examples)
 - [Want to use Ably on Roku?](#want-to-use-ably-on-roku)
 - [Contributing](#contributing)
     - [Process](#process)
@@ -18,6 +17,10 @@ using Brightscript.
 [Bitcoin pricing channel](https://www.ably.io/hub/ably-bitflyer/bitcoin) from Ably Hub is used to power this demo.
 
 **Note: this is an experimental proof of concept and is not intended for production use at this time.**
+
+![Demo Example Gif](runningDemo.gif)
+
+If you would like to view the live examples on your own Roku device you can follow the steps listed in the [Contributing -> Development Requirements](#development-requirements) section.
 
 ## Supported platforms
 This proof of concept supports the following platforms:
@@ -71,13 +74,6 @@ sub onMessages(event as Object)
   end for
 end sub
 ```
-
-## Live Examples
-
-![Demo Example Gif](runningDemo.gif)
-
-If you would like to view the live examples on your own Roku device you can follow the steps listed in the [Contributing -> Development Requirements](#development-requirements) section.
-
 
 ## Want to use Ably on Roku? 
 
