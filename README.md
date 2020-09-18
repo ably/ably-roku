@@ -22,7 +22,7 @@ If you would like to try out this experimental work in your own channel you can 
 
 Example running and listening to an `AblyTask`:
 
-```
+```brightscript
 sub init()
   ' Create the AblyTask
   m.ablyTask = createObject("roSGNode", "AblyTask")
@@ -90,7 +90,7 @@ You will also need to [Enabling Developer Mode](https://developer.roku.com/en-ca
 
 You will also need to create an `.env` in the root of the project. This `.env` file can be empty but if you wish to speed up side loading you can add the following values:
 
-```
+```shell
 # This can ether be the IP address of your Roku
 # or you can set it to ${promptForHost} and the
 # extension will show you a list of devices on
