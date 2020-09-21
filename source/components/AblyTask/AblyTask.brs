@@ -44,9 +44,7 @@ sub runTask()
     end for
 
     ' Start watching for events
-    while stream()
-      ' Add a small sleep to avoid CPU overheating
-      sleep(20)
+    while receiveNextEvent()
     end while
   end if
 end sub
@@ -87,7 +85,7 @@ function attach(channel as string) as Boolean
   return response.code = 201
 end function
 
-function stream() as Boolean
+function receiveNextEvent() as Boolean
   response = makeRequest(recvEndpoint())
   if response.code = 200 OR response.code = 201 then
     handleBody(response.body)
