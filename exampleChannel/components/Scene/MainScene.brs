@@ -124,6 +124,10 @@ sub handleOpenWeatherNewsMessages(messages as Object, time as String)
     end for
 
     newTemperature = toString(message.data.main.temp - 273.15)
+    temperatureParts = newTemperature.tokenize(".")
+    if temperatureParts.count() > 1 then
+      newTemperature = temperatureParts[0] + "." + left(temperatureParts[1], 2)
+    end if
 
     if isNonEmptyArray(descriptions) then
       demoUiNode.liveText = newTemperature + "C with " + descriptions.join(", ")
