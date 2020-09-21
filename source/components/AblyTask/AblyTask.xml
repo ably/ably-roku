@@ -6,7 +6,7 @@
 
   <interface>
     <!-- #region events -->
-    <field id="messages" type="array" alwaysNotify="true" />
+    <field id="messageEvent" type="assocarray" alwaysNotify="true" />
     <field id="error" type="assocarray" alwaysNotify="true" />
     <field id="connected" type="assocarray" alwaysNotify="true" />
     <!-- #endregion events -->
@@ -14,7 +14,7 @@
     <!-- #region constructor parameters -->
     <!-- /* default endpoint for the comet protocol */ -->
     <field id="endpoint" type="string" value="https://rest.ably.io/comet" />
-    <field id="channel" type="string" />
+    <field id="channels" type="array" />
     <!-- /* Supported log levels are 0 - OFF, 1 - ERROR, 2 - WARN, 3 - INFO, 4 - DEBUG, 5 - VERBOSE */ -->
     <field id="logLevel" type="integer" value="3" />
     <!-- #endregion constructor parameters -->

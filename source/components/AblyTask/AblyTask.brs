@@ -20,8 +20,7 @@ end sub
 sub runTask()
   topValues = m.top.getFields()
   m.ENDPOINT = topValues.endpoint
-  m.CHANNEL = topValues.channel
-  m.KEY = getConnectionKey()
+  m.CHANNELS = topValues.channels
   m.logLevel = m.top.logLevel
   if m.logLevel > m.MAXIMUM_LOG_LEVEL then m.logLevel = m.MAXIMUM_LOG_LEVEL
 
@@ -33,12 +32,18 @@ sub runTask()
   m.connectionKey = ""
   if NOT isNonEmptyString(m.authenticationKey) then return
 
+  ' Establish the initial connection
   if connect() then
-    if attach() then
-      while stream()
-        sleep(20)
-      end while
-    end if
+    for each channel in m.CHANNELS
+      ' Send an attach requests for each channel
+      logInfo("Attaching:", channel, attach(channel))
+    end for
+
+    ' Start watching for events
+    while stream()
+      ' Add a small sleep to avoid CPU overheating
+      sleep(20)
+    end while
   end if
 end sub
 
@@ -58,8 +63,11 @@ function connect() as Boolean
   return false
 end function
 
-function attach() as Boolean
-  response = makeRequest(sendEndpoint(attachParameters()))
+function attach(channel as string) as Boolean
+  if channel = "" then return false
+
+  ' Request a subscription to the supplied channel be added to the current connection
+  response = makeRequest(sendEndpoint(attachParameters(channel)))
   return response.code = 201
 end function
 
@@ -87,17 +95,28 @@ sub handleBody(body)
         logVerbose("heartbeat")
       else if m.ACTIONS.ATTACHED = action then
         ' /* TODO: handle any attach errors */
-        logInfo("attached", m.CHANNEL)
+        logInfo("attached", protocolMessage.channel)
       else if m.ACTIONS.MESSAGE = action then
+        ' Process the message into something the client can use
+        eventBody = {
+          channel: protocolMessage.channel
+        }
+
+        ' Process each message for the client to lower the impact on the render thread
         messages = []
         for each message in protocolMessage.messages
           if message.encoding = "json" then message.data = ParseJson(message.data)
           messages.push(message)
           logVerbose("message:", message)
         end for
-        m.top.messages = messages
+
+        ' Attach the processed messages to the event to be returned to the client
+        eventBody.messages = messages
+
+        ' Return the event to the client
+        m.top.messageEvent = eventBody
       else if m.ACTIONS.DISCONNECTED = action then
-        logInfo("disconnected", m.CHANNEL)
+        logInfo("disconnected", protocolMessage)
       end if
     end if
   end for
@@ -133,10 +152,10 @@ function getDefaultQueryParams() as Object
   }
 end function
 
-function attachParameters() as Object
+function attachParameters(channel as string) as Object
   return {
     action: m.ACTIONS.ATTACH,
-    channel: m.CHANNEL
+    channel: channel
   }
 end function
 
