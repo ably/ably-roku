@@ -133,5 +133,5 @@ Once you have created your `.env` file you are now ready to side load the channe
 - JWT tokens are not yet supported
 - History until attached is not yet supported
 - Unlike the client libraries for other platforms messages are returned as array bundles
-  - If we get an update with many messages we send one `message` event object that has a `messages` array containing all the messages rather then one `message` event per message received. This is to reduce the number of times we need to cross thread boundaries
+  - If we get an update with many messages we send one `messageEvent` event object that has a `messages` array containing all the messages rather then one `message` event per message received. This is to reduce the number of times we need to cross thread boundaries
   - This means all events `messages` will be returned as an array
