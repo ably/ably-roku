@@ -43,8 +43,7 @@ sub init()
   ' Create the AblyTask
   m.ablyTask = createObject("roSGNode", "AblyTask")
 
-  ' Assignee the channels you wish to subscribe to
-  m.ablyTask.channels = ["[product:ably-bitflyer/bitcoin]bitcoin:jpy"]
+  ' Assign the channels you wish to subscribe to
 
   ' Observe the event fields
   m.ablyTask.observeField("messages", "onMessages")

@@ -58,7 +58,7 @@ sub createAndRunAblyTask(logLevel as Integer)
   m.ablyTask.observeField("error", "onError")
   m.ablyTask.observeField("connected", "onConnected")
 
-  ' Assignee the channels you wish to subscribe to and the logLevel if you wish to change the default
+  ' Assign the channels you wish to subscribe to and the logLevel if you wish to change the default
   channels = []
   for each key in m.CHANNELS
     channels.push(m.CHANNELS[key])
