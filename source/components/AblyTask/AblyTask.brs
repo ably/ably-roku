@@ -1,6 +1,9 @@
 
 sub init()
+  ' Function to run in the task tread once started
   m.top.functionName = "runTask"
+
+  ' Possible actions returned by realtime services
   m.ACTIONS = {
     HEARTBEAT: 0,
     DISCONNECTED: 6,
@@ -9,16 +12,17 @@ sub init()
     ATTACHED: 11,
     MESSAGE: 15
   }
-  m.headers = {
-    "Accept": "application/json"
-    "Content-Type": "application/json"
-  }
 
+  ' Highest supported log level. If set higher it will be lowered to match.
   m.MAXIMUM_LOG_LEVEL = 5
 end sub
 
+' Any code run from this functions will be run in the async task thread
 sub runTask()
+  ' Get all the public values in one pass to limit the amount of rendezvous
   topValues = m.top.getFields()
+
+  ' Process constructor values
   m.ENDPOINT = topValues.endpoint
   m.CHANNELS = topValues.channels
   m.logLevel = m.top.logLevel
@@ -48,11 +52,19 @@ sub runTask()
 end sub
 
 function connect() as Boolean
-  response = makeRequest(connectEndpoint(), Invalid, "GET", m.headers)
+  ' Make the initial connection request
+  response = makeRequest(connectEndpoint(), Invalid, "GET", {
+    "Accept": "application/json"
+    "Content-Type": "application/json"
+  })
+
+  ' Handle the response
   if response.code = 200 then
     if isNonEmptyArray(response.body) then
       firstEntry = response.body[0]
       if isNonEmptyAA(firstEntry) AND isNonEmptyAA(firstEntry.connectionDetails) then
+        ' Store the connection key and emit a connection event
+        logInfo("Connection:", connectionDetails)
         connectionDetails = firstEntry.connectionDetails
         m.connectionKey = connectionDetails.connectionKey
         m.top.connected = connectionDetails
@@ -60,6 +72,10 @@ function connect() as Boolean
       end if
     end if
   end if
+
+  ' There was an error, emit an error event
+  logError("Connection:", response.body)
+  m.top.error = response.body
   return false
 end function
 
