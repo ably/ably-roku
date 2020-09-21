@@ -1,4 +1,4 @@
-#const PROXY = true
+#const PROXY = false
 
 '==== Type validation functions ====
 '#region - These functions are used to help limit the possibilities of type miss match errors

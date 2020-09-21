@@ -31,8 +31,7 @@ sub runTask()
 
   if connect() then
     if attach() then
-      while true
-        stream()
+      while stream()
         sleep(20)
       end while
     end if
@@ -60,15 +59,20 @@ function attach() as Boolean
   return response.code = 201
 end function
 
-sub stream()
+function stream() as Boolean
   response = makeRequest(recvEndpoint())
   if response.code = 200 OR response.code = 201 then
     handleBody(response.body)
+  else if response.code = 410 then
+    logInfo("Token/key expired - refreshing")
+    m.KEY = getConnectionKey()
   else
     logError(response.body)
     m.top.error = response
+    return false
   end if
-end sub
+  return true
+end function
 
 sub handleBody(body)
   for each protocolMessage in body
@@ -79,7 +83,7 @@ sub handleBody(body)
         logVerbose("heartbeat")
       else if m.ACTIONS.ATTACHED = action then
         ' /* TODO: handle any attach errors */
-        logInfo("attached")
+        logInfo("attached", m.CHANNEL)
       else if m.ACTIONS.MESSAGE = action then
         messages = []
         for each message in protocolMessage.messages
@@ -89,7 +93,7 @@ sub handleBody(body)
         end for
         m.top.messages = messages
       else if m.ACTIONS.DISCONNECTED = action then
-        logInfo("disconnected")
+        logInfo("disconnected", m.CHANNEL)
       end if
     end if
   end for

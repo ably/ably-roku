@@ -23,7 +23,7 @@
 
 			<Rectangle id="demoWell" height="60" color="#494641">
 				<Rectangle id="demoWellChanged" height="60" color="#2E6D14" opacity="0.001" />
-				<Label id="liveText" horizAlign="center" vertAlign="center" height="60" text="data" font="font:SmallBoldSystemFont" wrap="true" />
+				<Label id="liveText" horizAlign="center" vertAlign="center" height="60" text="Awaiting new data..." font="font:SmallBoldSystemFont" wrap="true" />
 			</Rectangle>
 		</LayoutGroup>
 

@@ -105,7 +105,7 @@ end sub
 sub handleCoindeskMessages(messages as Object, time as String)
   demoUiNode = m[m.CHANNELS.COINDESK + "-channelDemoUiNode"]
   for each message in messages
-    demoUiNode.liveText = toString(message.data)
+    demoUiNode.liveText = "$" + toString(message.data)
     demoUiNode.time = time
   end for
 end sub
@@ -123,10 +123,16 @@ sub handleOpenWeatherNewsMessages(messages as Object, time as String)
       end if
     end for
 
+    newTemperature = toString(message.data.main.temp - 273.15)
+    temperatureParts = newTemperature.tokenize(".")
+    if temperatureParts.count() > 1 then
+      newTemperature = temperatureParts[0] + "." + left(temperatureParts[1], 2)
+    end if
+
     if isNonEmptyArray(descriptions) then
-      demoUiNode.liveText = toString(message.data.main.temp) + "C with " + descriptions.join(", ")
+      demoUiNode.liveText = newTemperature + "C with " + descriptions.join(", ")
     else
-      demoUiNode.liveText = toString(message.data.main.temp) + "C"
+      demoUiNode.liveText = newTemperature + "C"
     end if
     demoUiNode.time = time
   end for
@@ -138,7 +144,7 @@ end sub
 sub handleBitflyerMessages(messages as Object, time as String)
   demoUiNode = m[m.CHANNELS.BITFLYER + "-channelDemoUiNode"]
   for each message in messages
-    demoUiNode.liveText = toString(message.data.price)
+    demoUiNode.liveText = "¥" + toString(message.data.price)
     demoUiNode.time = time
   end for
 end sub
