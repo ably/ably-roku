@@ -25,9 +25,13 @@ sub runTask()
   m.logLevel = m.top.logLevel
   if m.logLevel > m.MAXIMUM_LOG_LEVEL then m.logLevel = m.MAXIMUM_LOG_LEVEL
 
-  logInfo(m.KEY)
+  ' Get the Authentication key
+  m.authenticationKey = getAuthenticationKey()
+
+  ' Make sure we got something back to use as am authentication key
+  logInfo("Authentication Key:", m.authenticationKey)
   m.connectionKey = ""
-  if NOT isNonEmptyString(m.KEY) then return
+  if NOT isNonEmptyString(m.authenticationKey) then return
 
   if connect() then
     if attach() then
@@ -65,7 +69,7 @@ function stream() as Boolean
     handleBody(response.body)
   else if response.code = 410 then
     logInfo("Token/key expired - refreshing")
-    m.KEY = getConnectionKey()
+    m.authenticationKey = getAuthenticationKey()
   else
     logError(response.body)
     m.top.error = response
@@ -99,7 +103,7 @@ sub handleBody(body)
   end for
 end sub
 
-function getConnectionKey() as String
+function getAuthenticationKey() as String
   response = makeRequest("https://www.ably.io/ably-auth/api-key/demos", Invalid)
   if response.code = 200 AND isNonEmptyString(response.body) then
     return response.body
@@ -124,7 +128,7 @@ end function
 function getDefaultQueryParams() as Object
   return {
     v: "1.2",
-    key: m.KEY,
+    key: m.authenticationKey,
     stream: "false"
   }
 end function
