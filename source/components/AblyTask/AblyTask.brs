@@ -78,8 +78,6 @@ function connect() as Boolean
 end function
 
 function attach(channel as string) as Boolean
-  if channel = "" then return false
-
   ' Request a subscription to the supplied channel be added to the current connection
   response = makeRequest(sendEndpoint(attachParameters(channel)))
   return response.code = 201
