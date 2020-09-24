@@ -40,12 +40,11 @@ sub runTask()
   if connect() then
     for each channel in m.CHANNELS
       ' Send an attach requests for each channel
-      logInfo("Attaching:", channel, attach(channel))
+      logInfo("Attaching:", channel, "success:", attach(channel))
     end for
 
     ' Start watching for events
-    while receiveNextEvent()
-    end while
+    stream()
   end if
 end sub
 
@@ -83,19 +82,25 @@ function attach(channel as string) as Boolean
   return response.code = 201
 end function
 
-function receiveNextEvent() as Boolean
-  response = makeRequest(recvEndpoint())
-  if response.code = 200 OR response.code = 201 then
-    handleBody(response.body)
-  else if response.code = 410 then
-    logInfo("Token/key expired - refreshing")
-    m.authenticationKey = getAuthenticationKey()
-  else
-    logError(response.body)
-    m.top.error = response
-    return false
-  end if
-  return true
+function stream() as Boolean
+  ' Start the main event loop
+  while true
+    ' Get the next message
+    response = makeRequest(recvEndpoint())
+    if response.code = 200 OR response.code = 201 then
+      ' Good response, handle the body contents
+      handleBody(response.body)
+    else if response.code = 410 then
+      ' Refresh the Token/key
+      logInfo("Token/key expired - refreshing")
+      m.authenticationKey = getAuthenticationKey()
+    else
+      logError(response.body)
+      m.top.error = response
+      ' End the task on error by stopping the event loop
+      exit while
+    end if
+  end while
 end function
 
 sub handleBody(body)
