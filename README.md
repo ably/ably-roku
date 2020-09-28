@@ -5,10 +5,11 @@
 - [Supported platforms](#supported-platforms)
 - [Installation](#installation)
 - [Want to use Ably on Roku?](#want-to-use-ably-on-roku)
+- [About Ably](#about-ably)
 - [Contributing](#contributing)
     - [Process](#process)
     - [Development Requirements](#development-requirements)
-- [Know Issues and Limitations](#know-issues-and-limitations)
+- [Known Issues and Limitations](#known-issues-and-limitations)
 
 ## Description
 
@@ -42,8 +43,12 @@ sub init()
   ' Create the AblyTask
   m.ablyTask = createObject("roSGNode", "AblyTask")
 
-  ' Assignee the channel you wish to subscribe to
-  m.ablyTask.channel = "[product:ably-bitflyer/bitcoin]bitcoin:jpy"
+  ' Assign the channels you wish to subscribe to
+  m.ablyTask.channels = [
+    "[product:ably-bitflyer/bitcoin]bitcoin:jpy",
+    "[product:ably-coindesk/bitcoin]bitcoin:usd",
+    "[product:ably-openweathermap/weather]weather:5128581"
+  ]
 
   ' Observe the event fields
   m.ablyTask.observeField("messages", "onMessages")
@@ -130,9 +135,7 @@ Once you have created your `.env` file you are now ready to side load the channe
 - The ability to supply your own token/key is not yet supported
 - Tokens are not refreshed when they expire leading to error events
 - JWT tokens are not yet supported
-- One task is required per channel you wish to subscribe to leading to one connection per channel
-  - Plan is to support many channels per task leading to less overall connections
 - History until attached is not yet supported
 - Unlike the client libraries for other platforms messages are returned as array bundles
-  - If we get an update with many messages we send one `messages` event as an array containing all the messages rather then one `message` event per message received. This is to reduce the number of times we need to cross thread boundaries
+  - If we get an update with many messages we send one `messageEvent` event object that has a `messages` array containing all the messages rather than one `message` event per message received. This is to reduce the number of times we need to cross thread boundaries
   - This means all events `messages` will be returned as an array

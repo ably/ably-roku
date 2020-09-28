@@ -1,6 +1,9 @@
 
 sub init()
+  ' Function to run in the task tread once started
   m.top.functionName = "runTask"
+
+  ' Possible actions returned by realtime services
   m.ACTIONS = {
     HEARTBEAT: 0,
     DISCONNECTED: 6,
@@ -9,41 +12,56 @@ sub init()
     ATTACHED: 11,
     MESSAGE: 15
   }
-  m.headers = {
-    "Accept": "application/json"
-    "Content-Type": "application/json"
-  }
 
+  ' Highest supported log level. If set higher it will be lowered to match.
   m.MAXIMUM_LOG_LEVEL = 5
 end sub
 
+' Any code run from this functions will be run in the async task thread
 sub runTask()
+  ' Get all the public values in one pass to limit the amount of rendezvous
   topValues = m.top.getFields()
+
+  ' Process constructor values
   m.ENDPOINT = topValues.endpoint
-  m.CHANNEL = topValues.channel
-  m.KEY = getConnectionKey()
+  m.CHANNELS = topValues.channels
   m.logLevel = m.top.logLevel
   if m.logLevel > m.MAXIMUM_LOG_LEVEL then m.logLevel = m.MAXIMUM_LOG_LEVEL
 
-  logInfo(m.KEY)
-  m.connectionKey = ""
-  if NOT isNonEmptyString(m.KEY) then return
+  ' Get the Authentication key
+  m.authenticationKey = getAuthenticationKey()
 
+  ' Make sure we got something back to use as am authentication key
+  logInfo("Authentication Key:", m.authenticationKey)
+  m.connectionKey = ""
+  if NOT isNonEmptyString(m.authenticationKey) then return
+
+  ' Establish the initial connection
   if connect() then
-    if attach() then
-      while stream()
-        sleep(20)
-      end while
-    end if
+    for each channel in m.CHANNELS
+      ' Send an attach requests for each channel
+      logInfo("Attaching:", channel, "success:", attach(channel))
+    end for
+
+    ' Start watching for events
+    stream()
   end if
 end sub
 
 function connect() as Boolean
-  response = makeRequest(connectEndpoint(), Invalid, "GET", m.headers)
+  ' Make the initial connection request
+  response = makeRequest(connectEndpoint(), Invalid, "GET", {
+    "Accept": "application/json"
+    "Content-Type": "application/json"
+  })
+
+  ' Handle the response
   if response.code = 200 then
     if isNonEmptyArray(response.body) then
       firstEntry = response.body[0]
       if isNonEmptyAA(firstEntry) AND isNonEmptyAA(firstEntry.connectionDetails) then
+        ' Store the connection key and emit a connection event
+        logInfo("Connection:", connectionDetails)
         connectionDetails = firstEntry.connectionDetails
         m.connectionKey = connectionDetails.connectionKey
         m.top.connected = connectionDetails
@@ -51,27 +69,38 @@ function connect() as Boolean
       end if
     end if
   end if
+
+  ' There was an error, emit an error event
+  logError("Connection:", response.body)
+  m.top.error = response.body
   return false
 end function
 
-function attach() as Boolean
-  response = makeRequest(sendEndpoint(attachParameters()))
+function attach(channel as string) as Boolean
+  ' Request a subscription to the supplied channel be added to the current connection
+  response = makeRequest(sendEndpoint(attachParameters(channel)))
   return response.code = 201
 end function
 
 function stream() as Boolean
-  response = makeRequest(recvEndpoint())
-  if response.code = 200 OR response.code = 201 then
-    handleBody(response.body)
-  else if response.code = 410 then
-    logInfo("Token/key expired - refreshing")
-    m.KEY = getConnectionKey()
-  else
-    logError(response.body)
-    m.top.error = response
-    return false
-  end if
-  return true
+  ' Start the main event loop
+  while true
+    ' Get the next message
+    response = makeRequest(recvEndpoint())
+    if response.code = 200 OR response.code = 201 then
+      ' Good response, handle the body contents
+      handleBody(response.body)
+    else if response.code = 410 then
+      ' Refresh the Token/key
+      logInfo("Token/key expired - refreshing")
+      m.authenticationKey = getAuthenticationKey()
+    else
+      logError(response.body)
+      m.top.error = response
+      ' End the task on error by stopping the event loop
+      exit while
+    end if
+  end while
 end function
 
 sub handleBody(body)
@@ -83,23 +112,34 @@ sub handleBody(body)
         logVerbose("heartbeat")
       else if m.ACTIONS.ATTACHED = action then
         ' /* TODO: handle any attach errors */
-        logInfo("attached", m.CHANNEL)
+        logInfo("attached", protocolMessage.channel)
       else if m.ACTIONS.MESSAGE = action then
+        ' Process the message into something the client can use
+        eventBody = {
+          channel: protocolMessage.channel
+        }
+
+        ' Process each message for the client to lower the impact on the render thread
         messages = []
         for each message in protocolMessage.messages
           if message.encoding = "json" then message.data = ParseJson(message.data)
           messages.push(message)
           logVerbose("message:", message)
         end for
-        m.top.messages = messages
+
+        ' Attach the processed messages to the event to be returned to the client
+        eventBody.messages = messages
+
+        ' Return the event to the client
+        m.top.messageEvent = eventBody
       else if m.ACTIONS.DISCONNECTED = action then
-        logInfo("disconnected", m.CHANNEL)
+        logInfo("disconnected", protocolMessage)
       end if
     end if
   end for
 end sub
 
-function getConnectionKey() as String
+function getAuthenticationKey() as String
   response = makeRequest("https://www.ably.io/ably-auth/api-key/demos", Invalid)
   if response.code = 200 AND isNonEmptyString(response.body) then
     return response.body
@@ -124,15 +164,15 @@ end function
 function getDefaultQueryParams() as Object
   return {
     v: "1.2",
-    key: m.KEY,
+    key: m.authenticationKey,
     stream: "false"
   }
 end function
 
-function attachParameters() as Object
+function attachParameters(channel as string) as Object
   return {
     action: m.ACTIONS.ATTACH,
-    channel: m.CHANNEL
+    channel: channel
   }
 end function
 

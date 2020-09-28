@@ -3,7 +3,7 @@ sub init()
   m.CHANNELS = {
     COINDESK: "[product:ably-coindesk/bitcoin]bitcoin:usd"
     OPEN_WEATHER_NEWS: "[product:ably-openweathermap/weather]weather:5128581"
-    BITFLYER: "[product:ably-bitflyer/bitcoin]bitcoin:jpy",
+    BITFLYER: "[product:ably-bitflyer/bitcoin]bitcoin:jpy"
   }
 
   m.demosGroup = m.top.findNode("demosGroup")
@@ -29,6 +29,8 @@ sub init()
     channel: m.CHANNELS.BITFLYER
     logLevel: LOG_LEVEL
   })
+
+  createAndRunAblyTask(LOG_LEVEL)
 end sub
 
 ' Used to create both the demo Ui node and the Ably Task
@@ -43,23 +45,29 @@ sub createDemo(configuration as Object)
     channel: configuration.channel
   })
   m[configuration.channel + "-channelDemoUiNode"] = demoUiNode
+end sub
 
+' Creates the Ably task, sets up watchers on the event fields, assigns the channels to subscribe to, sets the log level, and starts the task.
+' @param {Integer} logLevel - The level of logging the task should use
+sub createAndRunAblyTask(logLevel as Integer)
   ' Create the AblyTask
-  ablyTask = createObject("roSGNode", "AblyTask")
-
-  ' Assignee the channel you wish to subscribe to and the logLevel if you wish to change the default
-  ablyTask.channel = configuration.channel
-  ablyTask.logLevel = configuration.logLevel
+  m.ablyTask = createObject("roSGNode", "AblyTask")
 
   ' Observe the event fields
-  ablyTask.observeField("messages", "onMessages")
-  ablyTask.observeField("error", "onError")
-  ablyTask.observeField("connected", "onConnected")
+  m.ablyTask.observeField("messageEvent", "onMessageEvent")
+  m.ablyTask.observeField("error", "onError")
+  m.ablyTask.observeField("connected", "onConnected")
+
+  ' Assign the channels you wish to subscribe to and the logLevel if you wish to change the default
+  channels = []
+  for each key in m.CHANNELS
+    channels.push(m.CHANNELS[key])
+  end for
+  m.ablyTask.channels = channels
+  m.ablyTask.logLevel = logLevel
 
   ' Start the task
-  ablyTask.control = "RUN"
-
-  m[configuration.channel + "-ablyTaskNode"] = ablyTask
+  m.ablyTask.control = "RUN"
 end sub
 
 ' Triggered when there is an error event
@@ -78,17 +86,17 @@ end sub
 
 ' Triggered when there are new messages to be handled.
 ' @param {Object} event - The RoSGNodeEvent object with the callback data
-sub onMessages(event as Object)
-  print "---------------- onMessages ----------------"
+sub onMessageEvent(event as Object)
+  print "-------------- onMessagesEvent --------------"
   ' Get the channel name from the event objects node
-  channel = event.getRoSGNode().channel
+  messageEvent = event.getData()
+  channel = messageEvent.channel
 
   print "Channel:", channel
   currentTime = getTime(createObject("roDateTime").ToISOString(), true)
 
   ' Get the messages array from the event object
-  messages = event.getData()
-
+  messages = messageEvent.messages
   ' Based on the channel call the appropriate handler function
   if channel = m.CHANNELS.COINDESK then
     handleCoindeskMessages(messages, currentTime)
