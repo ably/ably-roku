@@ -25,6 +25,8 @@ sub runTask()
   ' Process constructor values
   m.ENDPOINT = topValues.endpoint
   m.CHANNELS = topValues.channels
+  HISTORY_UNTIL_ATTACH = topValues.historyUntilAttach
+
   m.logLevel = m.top.logLevel
   if m.logLevel > m.MAXIMUM_LOG_LEVEL then m.logLevel = m.MAXIMUM_LOG_LEVEL
 
@@ -39,6 +41,8 @@ sub runTask()
   ' Establish the initial connection
   if connect() then
     for each channel in m.CHANNELS
+      ' Get the last message for this channel if configured to do so
+      if HISTORY_UNTIL_ATTACH then history(channel)
       ' Send an attach requests for each channel
       logInfo("Attaching:", channel, "success:", attach(channel))
     end for
@@ -74,6 +78,25 @@ function connect() as Boolean
   logError("Connection:", response.body)
   m.top.error = response.body
   return false
+end function
+
+function history(channel as string) as Boolean
+  ' Request a the last historic message for the supplied channel
+  response = makeRequest(historyEndpoint(channel))
+  success = response.code = 200 AND isNonEmptyArray(response.body)
+
+  if success then
+    ' Process and trigger message events based on the history of the channel
+    handleBody([{
+      action: m.ACTIONS.MESSAGE
+      channel: channel
+      messages: response.body
+    }])
+  else
+    logInfo("No history returned for channel:", channel)
+  end if
+
+  return success
 end function
 
 function attach(channel as string) as Boolean
@@ -150,15 +173,19 @@ function getAuthenticationKey() as String
 end function
 
 function connectEndpoint() as String
-  return m.ENDPOINT + "/connect"
+  return m.ENDPOINT + "/comet/connect"
+end function
+
+function historyEndpoint(channel as Object) as String
+  return appendQueriesToUri(m.ENDPOINT + "/channels/" + channel.encodeUriComponent() + "/messages", { "limit": "1"})
 end function
 
 function sendEndpoint(body as Object) as String
-  return appendQueriesToUri(m.ENDPOINT + "/" + m.connectionKey + "/send", { "body": formatJson([body]) })
+  return appendQueriesToUri(m.ENDPOINT + "/comet/" + m.connectionKey + "/send", { "body": formatJson([body]) })
 end function
 
 function recvEndpoint() as String
-  return m.ENDPOINT + "/" + m.connectionKey + "/recv"
+  return m.ENDPOINT + "/comet/" + m.connectionKey + "/recv"
 end function
 
 function getDefaultQueryParams() as Object
