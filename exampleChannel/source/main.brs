@@ -7,6 +7,9 @@ sub Main(inputArguments as object)
     screen.show()
     scene.observeField("appExit", m.port)
     scene.setFocus(true)
+
+    ' Get an api key for demonstration purposes and send it to the main scene
+    scene.ablyApiKey = getAuthenticationKey()
   end if
 
   while true
@@ -34,4 +37,15 @@ function runTests() as Boolean
     print "Rooibos not found. Running as sample channel"
     return false
   end if
+end function
+
+' Gets an api key from the demos endpoint
+function getAuthenticationKey() as String
+  transferObject = createObject("roUrlTransfer")
+  transferObject.setCertificatesFile("common:/certs/ca-bundle.crt")
+  transferObject.initClientCertificates()
+  transferObject.retainBodyOnError(true)
+  transferObject.setUrl("https://www.ably.io/ably-auth/api-key/demos")
+  response = transferObject.getToString()
+  return response
 end function

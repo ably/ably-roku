@@ -31,7 +31,7 @@ sub runTask()
   if m.logLevel > m.MAXIMUM_LOG_LEVEL then m.logLevel = m.MAXIMUM_LOG_LEVEL
 
   ' Get the Authentication key
-  m.authenticationKey = getAuthenticationKey()
+  m.authenticationKey = topValues.key
 
   ' Make sure we got something back to use as am authentication key
   logInfo("Authentication Key:", m.authenticationKey)

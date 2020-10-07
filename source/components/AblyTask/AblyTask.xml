@@ -13,6 +13,7 @@
 
     <!-- #region constructor parameters -->
     <!-- /* default endpoint for the comet protocol */ -->
+    <field id="key" type="string" />
     <field id="endpoint" type="string" value="https://rest.ably.io" />
     <field id="channels" type="array" />
     <field id="historyUntilAttach" type="boolean" value="true" />
