@@ -86,9 +86,130 @@ end function
 '#endregion ==== End of the type validation functions ====
 
 
-'==== Url helper functions ====
-'#region - These functions are used to manipulate, validate, and query urls
-'==== Url helper functions ====
+'==== Network and Url helper functions ====
+'#region - These functions are used to manipulate, validate, and query urls as well as sending network requests
+'==== Network and Url helper functions ====
+
+' @description Makes a network request.
+' @param {AssociativeArray} url - The URL to be used for the transfer request.
+' @property {AssociativeArray} requestOptions - An object containing items like body, or headers.
+' @param {AssociativeArray|Array|String} [requestOptions.body] - The request body. AAs and Arrays will be automatically converted to json.
+' @param {String} [requestOptions.certificateFile] - A path to a certificate File. Default is "common:/certs/ca-bundle.crt".
+' @param {AssociativeArray[]} [requestOptions.cookies] - Cookies should be an Array of AssociativeArrays. Each AA should be in the same format as the AAs returned by [getCookie()]{@link https://developer.roku.com/en-ca/docs/references/brightscript/interfaces/ifhttpagent.md#getcookiesdomain-as-string-path-as-string-as-object}. The specified cookies are added to the cookie cache.
+' @param {AssociativeArray} [requestOptions.headers] - An object of key value pairs to be used as headers.
+' @param {String} [requestOptions.method] - A HTTP method string. Supported values are: "GET", "HEAD", "POST"
+' @property {AssociativeArray} [requestOptions.queries] - An object of key value pairs to be used as query parameters.
+' @return {TransferInfo} Returns a transfer info object with details about the request.
+function makeRequest(url as String, requestOptions as Object) as Object
+
+  ' Request defaults
+  options = {
+    body: Invalid
+    certificateFile: "common:/certs/ca-bundle.crt"
+    cookies: Invalid
+    headers: Invalid
+    method: "GET"
+    queries: Invalid
+  }
+
+  ' Override the default options with the incoming options
+  options.append(requestOptions)
+
+  if isNonEmptyAA(options.queries) then url = appendQueriesToUri(url, options.queries)
+
+  url = urlProxy(url)
+  messagePort = createObject("roMessagePort")
+  transferObject = createNewUrlTransfer(messagePort)
+  transferObject.setUrl(url)
+
+  ' Make sure the Url was correctly set.... This can fail due to bad encoding...
+  if url = transferObject.getUrl() then
+    if isNonEmptyString(options.certificateFile) then
+      transferObject.setCertificatesFile(options.certificateFile)
+      transferObject.initClientCertificates()
+    end if
+
+    if isNonEmptyAA(options.headers) then transferObject.setHeaders(options.headers)
+
+    if isNonEmptyAA(options.cookies) then
+      transferObject.enableCookies()
+      transferObject.addCookies(options.cookies)
+    else
+      transferObject.clearCookies()
+    end if
+
+    if isNonEmptyString(options.method) then transferObject.setRequest(options.method)
+
+    body = options.body
+    if isAA(body) OR isArray(body) then
+      ok = transferObject.asyncPostFromString(formatJson(body))
+    else if isString(body) then
+      ok = transferObject.asyncPostFromString(body)
+    else
+      ok = transferObject.asyncGetToString()
+    end if
+  else
+    ok = false
+  end if
+
+  if NOT ok then
+    return {
+      "ok": ok
+      "code": 0
+      "body": Invalid
+      "headers": {}
+      "messageDetails": ""
+      "url": url
+    }
+  else
+    while true
+      message = getMessage(messagePort)
+      if message <> Invalid then
+        if isUrlEvent(message) then return processResponse(message, transferObject)
+      end if
+    end while
+  end if
+end function
+
+function processResponse(message as Object, transferObject as Object) as Object
+  code = message.getResponseCode()
+  body = message.getString()
+  headers = message.getResponseHeaders()
+  requestUrl = transferObject.getUrl()
+  ' Was there a curl error?
+  ok = code >= 0
+
+  if ok AND isNonEmptyString(body) then
+    contentType = ""
+    if isNonEmptyAA(headers) AND isNonEmptyString(headers["content-type"]) then contentType = headers["content-type"]
+    if stringIncludes(contentType, "application/json") then
+      bodyAsObject = parseJson(body)
+      if isNotInvalid(bodyAsObject) then
+        body = bodyAsObject
+      end if
+    end if
+  else
+    body = Invalid
+  end if
+
+  return {
+    "ok": ok
+    "code": message.getResponseCode()
+    "body": body
+    "headers": headers
+    "messageDetails": message.getFailureReason()
+    "url": requestUrl
+  }
+end function
+
+function createNewUrlTransfer(messagePort as Object) as Object
+  transferObject = createObject("roUrlTransfer")
+  transferObject.setPort(messagePort)
+  transferObject.enableEncodings(true)
+  transferObject.retainBodyOnError(true)
+  ' transferObject.setMinimumTransferRate(2147483647, m.timeout)
+  return transferObject
+end function
 
 function urlProxy(url as string) as string
   #if PROXY
@@ -142,12 +263,18 @@ function appendQueriesToUri(uri as String, queryParameters = Invalid as Dynamic)
 	return uri
 end function
 
-'#endregion ==== End of the url helper functions ====
+'#endregion ==== End of the Network and Url helper functions ====
 
 
 '==== General helper functions ====
 '#region - These functions are used for a variety of general tasks
 '==== General helper functions ====
+
+function stringToBase64(value as String) as String
+	byteArray = createObject("roByteArray")
+	byteArray.fromAsciiString(value)
+	return byteArray.toBase64String()
+end function
 
 sub getMessage(messagePort as Object, sleepInterval = 20 as Integer) as Dynamic
 	message = messagePort.getMessage()
