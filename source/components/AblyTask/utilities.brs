@@ -207,7 +207,6 @@ function createNewUrlTransfer(messagePort as Object) as Object
   transferObject.setPort(messagePort)
   transferObject.enableEncodings(true)
   transferObject.retainBodyOnError(true)
-  ' transferObject.setMinimumTransferRate(2147483647, m.timeout)
   return transferObject
 end function
 
