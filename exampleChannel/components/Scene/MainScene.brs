@@ -1,5 +1,5 @@
 sub init()
-  LOG_LEVEL = 3
+  m.LOG_LEVEL = 3
   m.CHANNELS = {
     COINDESK: "[product:ably-coindesk/bitcoin]bitcoin:usd"
     OPEN_WEATHER_NEWS: "[product:ably-openweathermap/weather]weather:5128581"
@@ -13,24 +13,19 @@ sub init()
     header: "Coindesk - bitcoin prices live stream"
     description: "CoinDesk provides current pricing for Bitcoin. This data is available for free on their website. Using API Streamer, it's easy to access this data as a realtime stream. View the documentation for this product on Ably Hub to learn how to implement this yourself."
     channel: m.CHANNELS.COINDESK
-    logLevel: LOG_LEVEL
   })
 
   createDemo({
     header: "Open Weather News - a live stream of weather related data"
     description: "OpenWeatherMap provides live weather data for almost any location over the world. This data is available for free on their website. Using API Streamer, it's easy to access this data as a realtime stream. View the documentation for this product on Ably Hub to learn how to implement this yourself."
     channel: m.CHANNELS.OPEN_WEATHER_NEWS
-    logLevel: LOG_LEVEL
   })
 
   createDemo({
     header: "Bitflyer - bitcoin prices live stream"
     description: "Bitflyer provides current pricing for Bitcoin. This data is available for free on their website. Using API Streamer, it's easy to access this data as a realtime stream. View the documentation for this product on Ably Hub to learn how to implement this yourself."
     channel: m.CHANNELS.BITFLYER
-    logLevel: LOG_LEVEL
   })
-
-  createAndRunAblyTask(LOG_LEVEL)
 end sub
 
 ' Used to create both the demo Ui node and the Ably Task
@@ -47,9 +42,18 @@ sub createDemo(configuration as Object)
   m[configuration.channel + "-channelDemoUiNode"] = demoUiNode
 end sub
 
+' Callback triggered once an api key has been obtained
+' @param {Object} event - The RoSGNodeEvent object with the callback data
+sub onAblyApiKeyChange(event as Object)
+  'Start the Ably task with the api key provided
+  apiKey = event.getData()
+  print "onAblyApiKeyChange", apiKey
+  createAndRunAblyTask(apiKey)
+end sub
+
 ' Creates the Ably task, sets up watchers on the event fields, assigns the channels to subscribe to, sets the log level, and starts the task.
-' @param {Integer} logLevel - The level of logging the task should use
-sub createAndRunAblyTask(logLevel as Integer)
+' @param {String} aipKey - Your API key
+sub createAndRunAblyTask(aipKey as String)
   ' Create the AblyTask
   m.ablyTask = createObject("roSGNode", "AblyTask")
 
@@ -60,11 +64,14 @@ sub createAndRunAblyTask(logLevel as Integer)
 
   ' Assign the channels you wish to subscribe to and the logLevel if you wish to change the default
   channels = []
-  for each key in m.CHANNELS
-    channels.push(m.CHANNELS[key])
+  for each channelKey in m.CHANNELS
+    channels.push(m.CHANNELS[channelKey])
   end for
   m.ablyTask.channels = channels
-  m.ablyTask.logLevel = logLevel
+
+  ' Set the Api key and log level
+  m.ablyTask.key = aipKey
+  m.ablyTask.logLevel = m.LOG_LEVEL
 
   ' Start the task
   m.ablyTask.control = "RUN"

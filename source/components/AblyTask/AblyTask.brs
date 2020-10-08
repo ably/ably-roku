@@ -1,16 +1,36 @@
+'==== Setup ====
+'#region - The main setup and initial auth flows
+'==== Setup ====
 
 sub init()
   ' Function to run in the task tread once started
   m.top.functionName = "runTask"
 
+  ' Used for testing and working on token refresh logic
+  ' If you want to test/work on refreshing on AUTH actions set a TTL of more then "45000" ms
+  ' If you want to test/work on tokens expiring then set a TTL of "30000" ms or less
+  m.TOKEN_TTL$ = ""
+
   ' Possible actions returned by realtime services
   m.ACTIONS = {
     HEARTBEAT: 0,
+    ACK: 1,
+    NACK: 2,
+    CONNECT: 3,
+    CONNECTED: 4,
+    DISCONNECT: 5,
     DISCONNECTED: 6,
     CLOSE: 7,
+    CLOSED: 8,
+    ERROR: 9,
     ATTACH: 10,
     ATTACHED: 11,
-    MESSAGE: 15
+    DETACH: 12,
+    DETACHED: 13,
+    PRESENCE: 14,
+    MESSAGE: 15,
+    SYNC: 16,
+    AUTH: 17
   }
 
   ' Highest supported log level. If set higher it will be lowered to match.
@@ -19,6 +39,9 @@ end sub
 
 ' Any code run from this functions will be run in the async task thread
 sub runTask()
+  ' Used to stop the event loop in the event of an error
+  m.encounteredCriticalError = false
+
   ' Get all the public values in one pass to limit the amount of rendezvous
   topValues = m.top.getFields()
 
@@ -31,100 +54,23 @@ sub runTask()
   if m.logLevel > m.MAXIMUM_LOG_LEVEL then m.logLevel = m.MAXIMUM_LOG_LEVEL
 
   ' Get the Authentication key
-  m.authenticationKey = getAuthenticationKey()
-
-  ' Make sure we got something back to use as am authentication key
-  logInfo("Authentication Key:", m.authenticationKey)
-  m.connectionKey = ""
-  if NOT isNonEmptyString(m.authenticationKey) then return
+  m.authenticationKey = topValues.key
+  getJwtToken()
 
   ' Establish the initial connection
   if connect() then
-    for each channel in m.CHANNELS
-      ' Get the last message for this channel if configured to do so
-      if HISTORY_UNTIL_ATTACH then history(channel)
-      ' Send an attach requests for each channel
-      logInfo("Attaching:", channel, "success:", attach(channel))
-    end for
-
+    subscribeToChannels(HISTORY_UNTIL_ATTACH)
     ' Start watching for events
     stream()
   end if
 end sub
+'#endregion ==== End of Setup ====
 
-function connect() as Boolean
-  ' Make the initial connection request
-  response = makeRequest(connectEndpoint(), Invalid, "GET", {
-    "Accept": "application/json"
-    "Content-Type": "application/json"
-  })
 
-  ' Handle the response
-  if response.code = 200 then
-    if isNonEmptyArray(response.body) then
-      firstEntry = response.body[0]
-      if isNonEmptyAA(firstEntry) AND isNonEmptyAA(firstEntry.connectionDetails) then
-        ' Store the connection key and emit a connection event
-        logInfo("Connection:", connectionDetails)
-        connectionDetails = firstEntry.connectionDetails
-        m.connectionKey = connectionDetails.connectionKey
-        m.top.connected = connectionDetails
-        return true
-      end if
-    end if
-  end if
 
-  ' There was an error, emit an error event
-  logError("Connection:", response.body)
-  m.top.error = response.body
-  return false
-end function
-
-function history(channel as string) as Boolean
-  ' Request a the last historic message for the supplied channel
-  response = makeRequest(historyEndpoint(channel))
-  success = response.code = 200 AND isNonEmptyArray(response.body)
-
-  if success then
-    ' Process and trigger message events based on the history of the channel
-    handleBody([{
-      action: m.ACTIONS.MESSAGE
-      channel: channel
-      messages: response.body
-    }])
-  else
-    logInfo("No history returned for channel:", channel)
-  end if
-
-  return success
-end function
-
-function attach(channel as string) as Boolean
-  ' Request a subscription to the supplied channel be added to the current connection
-  response = makeRequest(sendEndpoint(attachParameters(channel)))
-  return response.code = 201
-end function
-
-function stream() as Boolean
-  ' Start the main event loop
-  while true
-    ' Get the next message
-    response = makeRequest(recvEndpoint())
-    if response.code = 200 OR response.code = 201 then
-      ' Good response, handle the body contents
-      handleBody(response.body)
-    else if response.code = 410 then
-      ' Refresh the Token/key
-      logInfo("Token/key expired - refreshing")
-      m.authenticationKey = getAuthenticationKey()
-    else
-      logError(response.body)
-      m.top.error = response
-      ' End the task on error by stopping the event loop
-      exit while
-    end if
-  end while
-end function
+'==== Comet protocol handling ====
+'#region - Main starting point for processing events sent to us via the comet protocol
+'==== Comet protocol handling ====
 
 sub handleBody(body)
   for each protocolMessage in body
@@ -135,7 +81,7 @@ sub handleBody(body)
         logVerbose("heartbeat")
       else if m.ACTIONS.ATTACHED = action then
         ' /* TODO: handle any attach errors */
-        logInfo("attached", protocolMessage.channel)
+        logInfo("Attached to:", protocolMessage.channel)
       else if m.ACTIONS.MESSAGE = action then
         ' Process the message into something the client can use
         eventBody = {
@@ -157,144 +103,210 @@ sub handleBody(body)
         m.top.messageEvent = eventBody
       else if m.ACTIONS.DISCONNECTED = action then
         logInfo("disconnected", protocolMessage)
+      else if m.ACTIONS.AUTH = action then
+        logInfo("AUTH action received - updating token")
+        getJwtToken()
       end if
     end if
   end for
 end sub
 
-function getAuthenticationKey() as String
-  response = makeRequest("https://www.ably.io/ably-auth/api-key/demos", Invalid)
-  if response.code = 200 AND isNonEmptyString(response.body) then
-    return response.body
+'#endregion ==== End of Comet protocol handling ====
+
+
+
+'==== REST api functions ====
+'#region - These functions are used call and handle different REST api requests
+'==== REST api functions ====
+
+sub getJwtToken()
+  ' Clear the old token
+  m.jwtToken = Invalid
+
+  ' the & denotes LongInteger
+  ' Without this the conversion to milliseconds will be incorrect
+  timestamp& = createObject("roDateTime").AsSeconds()
+  timestamp& = timestamp& * 1000
+
+  ' Split the token into the public and private parts
+  keyParts = m.authenticationKey.tokenize(":")
+  keyName = keyParts[0]
+  keySecret = keyParts[1]
+
+  ' Get a JWT token
+  result = makeRequest(requestTokenEndpoint(keyName), {
+    "body": {
+      "ttl": m.TOKEN_TTL$,
+      "timestamp": timestamp&,
+      "keyName": keyName,
+    },
+    "method": "POST",
+    "headers": {
+      "Content-Type": "application/json"
+      "Authorization": "Basic " + stringToBase64(m.authenticationKey),
+    }
+  })
+
+  if result.code = 201 then
+    m.jwtToken = result.body.token
   else
-    m.top.error = response
-    return ""
+    triggerErrorEvent("JWT Token Fetch", result.body, true)
   end if
+end sub
+
+function connect() as Boolean
+  ' Make the initial connection request
+  response = makeRequest(connectEndpoint(), {
+    "headers": addAuthenticationToHeaders({
+      "Accept": "application/json"
+      "Content-Type": "application/json"
+    })
+  })
+
+  ' Handle the response
+  if response.code = 200 then
+    if isNonEmptyArray(response.body) then
+      firstEntry = response.body[0]
+      if isNonEmptyAA(firstEntry) AND isNonEmptyAA(firstEntry.connectionDetails) then
+        ' Store the connection key and emit a connection event
+        logInfo("Connection:", firstEntry)
+        m.connection = firstEntry
+        m.top.connected = firstEntry.connectionDetails
+        return true
+      end if
+    end if
+  end if
+
+  ' There was an error, emit an error event
+  triggerErrorEvent("Connection", response.body, true)
+  return false
+end function
+
+sub subscribeToChannels(getLastMessageFromHistory = false as Boolean)
+  for each channel in m.CHANNELS
+    ' Get the last message for this channel if configured to do so
+    if getLastMessageFromHistory then history(channel)
+    ' Send an attach requests for each channel
+    logInfo("Attaching:", channel, "success:", attach(channel))
+  end for
+end sub
+
+function history(channel as String) as Boolean
+  ' Request a the last historic message for the supplied channel
+  response = makeRequest(historyEndpoint(channel), { "headers": addAuthenticationToHeaders() })
+  success = response.code = 200 AND isNonEmptyArray(response.body)
+
+  if success then
+    ' Process and trigger message events based on the history of the channel
+    handleBody([{
+      action: m.ACTIONS.MESSAGE
+      channel: channel
+      messages: response.body
+    }])
+  else
+    logInfo("No history returned for channel:", channel)
+  end if
+
+  return success
+end function
+
+function attach(channel as String) as Boolean
+  ' Request a subscription to the supplied channel be added to the current connection
+  response = makeRequest(sendEndpoint({
+    action: m.ACTIONS.ATTACH,
+    channel: channel
+  }), { "headers": addAuthenticationToHeaders() })
+  return response.code = 201
+end function
+
+function stream() as Boolean
+  ' Start the main event loop
+  while NOT m.encounteredCriticalError
+    ' Get the next message
+    response = makeRequest(recvEndpoint(), { "headers": addAuthenticationToHeaders() })
+    if response.code = 200 OR response.code = 201 then
+      ' Good response, handle the body contents
+      handleBody(response.body)
+    else if response.code = 401 AND (response.body.error.code >= 40140 AND response.body.error.code < 40150) then
+      ' https://docs.ably.io/client-lib-development-guide/features/#RSA4b
+      logInfo(response.body.error.message)
+      logInfo("Token expired - refreshing")
+      ' Refresh the Token
+      getJwtToken()
+      connect()
+      subscribeToChannels(false)
+    else
+      triggerErrorEvent("Stream", response.body, true)
+      ' End the task on error by stopping the event loop
+      exit while
+    end if
+  end while
+end function
+
+'#endregion ==== End of the REST api functions ====
+
+
+
+'==== Endpoint functions ====
+'#region - These functions are used to get and format different endpoint urls
+'==== Endpoint functions ====
+
+function requestTokenEndpoint(keyName as String) as String
+  return m.ENDPOINT + "/keys/" + keyName + "/requestToken"
 end function
 
 function connectEndpoint() as String
-  return m.ENDPOINT + "/comet/connect"
+  queries = {
+    "v": "1.2",
+    "stream": "false"
+  }
+  ' If there is a valid JWT token then we should not include the api key in the query
+  if NOT isNonEmptyString(m.jwtToken) then queries["key"] = m.authenticationKey
+  return appendQueriesToUri(m.ENDPOINT + "/comet/connect", queries)
 end function
 
-function historyEndpoint(channel as Object) as String
-  return appendQueriesToUri(m.ENDPOINT + "/channels/" + channel.encodeUriComponent() + "/messages", { "limit": "1"})
+function historyEndpoint(channel as Object, limit = "1" as String) as String
+  return appendQueriesToUri(m.ENDPOINT + "/channels/" + channel.encodeUriComponent() + "/messages", { "limit": limit })
 end function
 
 function sendEndpoint(body as Object) as String
-  return appendQueriesToUri(m.ENDPOINT + "/comet/" + m.connectionKey + "/send", { "body": formatJson([body]) })
+  return appendQueriesToUri(m.ENDPOINT + "/comet/" + m.connection.connectionKey + "/send", { "body": formatJson([body]) })
 end function
 
 function recvEndpoint() as String
-  return m.ENDPOINT + "/comet/" + m.connectionKey + "/recv"
+  return m.ENDPOINT + "/comet/" + m.connection.connectionKey + "/recv"
 end function
 
-function getDefaultQueryParams() as Object
-  return {
-    v: "1.2",
-    key: m.authenticationKey,
-    stream: "false"
+'#endregion ==== End of the Endpoint functions ====
+
+
+
+'==== General helper functions ====
+'#region - These functions are used for a variety of general tasks
+'==== General helper functions ====
+
+sub triggerErrorEvent(context as String, messageBody as Dynamic, critical = false as Boolean)
+  ' There was an error, emit an error event
+  error = {
+    "critical": critical
+    "context": context
+    "details": messageBody
   }
-end function
-
-function attachParameters(channel as string) as Object
-  return {
-    action: m.ACTIONS.ATTACH,
-    channel: channel
-  }
-end function
-
-function createNewUrlTransfer(messagePort as Object) as Object
-  transferObject = createObject("roUrlTransfer")
-  transferObject.setPort(messagePort)
-  transferObject.enableEncodings(true)
-  transferObject.retainBodyOnError(true)
-  ' transferObject.setMinimumTransferRate(2147483647, m.timeout)
-  return transferObject
-end function
-
-function makeRequest(url as String, body = Invalid as Dynamic, method = "GET" as String, headers = Invalid as Dynamic, cookies = Invalid as Dynamic, certificateFile = "common:/certs/ca-bundle.crt" as String) as Object
-  url = urlProxy(appendQueriesToUri(url, getDefaultQueryParams()))
-  messagePort = createObject("roMessagePort")
-  transferObject = createNewUrlTransfer(messagePort)
-  transferObject.setUrl(url)
-
-  response = {
-    "ok": false
-    "code": 0
-    "body": Invalid
-    "headers": {}
-    "messageDetails": ""
-    "url": url
-  }
-
-  ' Make sure the Url was correctly set.... This can fail due to bad encoding...
-  if url = transferObject.getUrl() then
-    transferObject.setCertificatesFile(certificateFile)
-    transferObject.initClientCertificates()
-
-    if isNonEmptyAA(headers) then transferObject.setHeaders(headers)
-
-    if isNonEmptyAA(cookies) then
-      transferObject.enableCookies()
-      transferObject.addCookies(cookies)
-    else
-      transferObject.clearCookies()
-    end if
-
-    transferObject.setRequest(method)
-
-    if isAA(body) OR isArray(body) then
-      ok = transferObject.asyncPostFromString(formatJson(body))
-    else if isString(body) then
-      ok = transferObject.asyncPostFromString(body)
-    else
-      ok = transferObject.asyncGetToString()
-    end if
+  if critical then
+    ' In the event of a critical error execution of the task will be terminated
+    m.encounteredCriticalError = true
+    logError(context + ":", messageBody)
   else
-    ok = false
+    logWarn(context + ":", messageBody)
   end if
 
-  response.ok = ok
+  ' Send the error information back to the client
+  m.top.error = error
+end sub
 
-  if NOT ok then
-    return response
-  else
-    while true
-      message = getMessage(messagePort)
-      if message <> Invalid then
-        if isUrlEvent(message) then return processResponse(message, transferObject)
-      end if
-    end while
-  end if
+function addAuthenticationToHeaders(headers = {} as Object) as Object
+  if isNonEmptyString(m.jwtToken) then headers["Authorization"] = "Bearer " + m.jwtToken
+  return headers
 end function
 
-function processResponse(message as Object, transferObject as Object) as Object
-  code = message.getResponseCode()
-  body = message.getString()
-  headers = message.getResponseHeaders()
-  requestUrl = transferObject.getUrl()
-  ' Was there a curl error?
-  ok = code >= 0
-
-  if isNonEmptyString(body) then
-    contentType = ""
-    if isNonEmptyAA(headers) AND isNonEmptyString(headers["content-type"]) then contentType = headers["content-type"]
-    if stringIncludes(contentType, "application/json") then
-      bodyAsObject = parseJson(body)
-      if isNotInvalid(bodyAsObject) then
-        body = bodyAsObject
-      end if
-    end if
-  else
-    body = Invalid
-  end if
-
-  return {
-    "ok": ok
-    "code": message.getResponseCode()
-    "body": body
-    "headers": headers
-    "messageDetails": message.getFailureReason()
-    "url": requestUrl
-  }
-end function
+'#endregion ==== End of the general helper functions ====

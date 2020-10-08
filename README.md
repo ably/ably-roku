@@ -13,14 +13,14 @@
 
 ## Description
 
-This repository is a proof-of-concept demo of subscribing to [Ably channels](https://www.ably.io/) on Roku platform 
-using Brightscript. 
+This repository is a proof-of-concept demo of subscribing to [Ably channels](https://www.ably.io/) on Roku platform
+using Brightscript.
 
 [Bitflyer](https://www.ably.io/hub/ably-bitflyer/bitcoin), [Coindesk](https://www.ably.io/hub/ably-coindesk/bitcoin) and [Weather Data](https://www.ably.io/hub/ably-openweathermap/weather) channels from Ably Hub are used to power this demo.
 
 **Note: this is an experimental proof of concept and is not intended for production use at this time.**
 
-Example screen capture from a Roku device: 
+Example screen capture from a Roku device:
 
 ![Demo Example Gif](runningDemo.gif)
 
@@ -42,6 +42,9 @@ Example running and listening to an `AblyTask`:
 sub init()
   ' Create the AblyTask
   m.ablyTask = createObject("roSGNode", "AblyTask")
+
+  ' Assign the API to the task used for authentication
+  m.ablyTask.key = "xVLyHw.XuwW-w:yOPxtXWlsZn10nzy"
 
   ' Assign the channels you wish to subscribe to
   m.ablyTask.channels = [
@@ -84,7 +87,7 @@ sub onMessages(event as Object)
 end sub
 ```
 
-## Want to use Ably on Roku? 
+## Want to use Ably on Roku?
 
 If you want to use Ably on Roku platform please [get in touch with the Ably team](https://ably.com/contact).
 
@@ -110,7 +113,7 @@ Ably is an enterprise-ready pub/sub messaging platform with integrated services 
 
 For development and side loading of the channel we use [VS Code](https://code.visualstudio.com/) with the [BrightScript Language Extension](https://marketplace.visualstudio.com/items?itemName=celsoaf.brightscript).
 
-You will also need to [Enabling Developer Mode](https://developer.roku.com/en-ca/videos/courses/getting-started/developer-mode.md) on your device. 
+You will also need to [Enabling Developer Mode](https://developer.roku.com/en-ca/videos/courses/getting-started/developer-mode.md) on your device.
 
 **Note**: We will not be using the browser-based Development Application Installer shown in the video ourselves. The extension will be taking care of all of that for us in VS Code.
 
@@ -132,9 +135,7 @@ Once you have created your `.env` file you are now ready to side load the channe
 
 ## Known Issues and Limitations
 
-- The ability to supply your own token/key is not yet supported
-- Tokens are not refreshed when they expire leading to error events
-- JWT tokens are not yet supported
+- The ability to supply your own token is not yet supported
 - Unlike the client libraries for other platforms messages are returned as array bundles
   - If we get an update with many messages we send one `messageEvent` event object that has a `messages` array containing all the messages rather than one `message` event per message received. This is to reduce the number of times we need to cross thread boundaries
   - This means all events `messages` will be returned as an array

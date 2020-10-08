@@ -4,6 +4,7 @@
   <script type="text/brightscript" uri="pkg:/source/helpers.brs" />
 
   <interface>
+    <field id="ablyApiKey" type="string" onChange="onAblyApiKeyChange" />
     <field id="appExit" type="bool" alwaysnotify="true" value="false" />
   </interface>
 
