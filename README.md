@@ -1,16 +1,6 @@
 
 # Ably on Roku - proof-of-concept
 
-- [Description](#description)
-- [Supported platforms](#supported-platforms)
-- [Installation](#installation)
-- [Want to use Ably on Roku?](#want-to-use-ably-on-roku)
-- [About Ably](#about-ably)
-- [Contributing](#contributing)
-    - [Process](#process)
-    - [Development Requirements](#development-requirements)
-- [Known Issues and Limitations](#known-issues-and-limitations)
-
 ## Description
 
 This repository is a proof-of-concept demo of subscribing to [Ably channels](https://www.ably.io/) on Roku platform
