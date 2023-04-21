@@ -18,7 +18,7 @@
   "homepage": "https://github.com/ably/ably-roku#readme",
   "dependencies": {
     "@types/node": "^14.10.1",
-    "roku-deploy": "^3.2.3",
+    "roku-deploy": "^3.10.1",
     "rooibos-cli": "^1.4.0",
     "ts-node": "^9.0.0"
   }
